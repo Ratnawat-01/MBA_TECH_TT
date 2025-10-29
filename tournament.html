@@ -3,42 +3,42 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Table Tennis — Tournament</title>
+<title>Table Tennis Tournament</title>
 <style>
-  :root{--bg:#070707;--accent:#00ff90;--card:#1b1b1b}
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(#080808,#050505);color:#fff}
-  .wrap{padding:14px;max-width:720px;margin:0 auto}
-  h1{color:var(--accent);font-size:1.2rem;margin:6px 0}
-  .section{background:var(--card);padding:10px;border-radius:12px;margin-top:12px;box-shadow:0 6px 20px rgba(0,255,144,0.06)}
-  table{width:100%;border-collapse:collapse;font-size:0.92rem}
-  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center}
-  th{background:rgba(0,0,0,0.25);color:#ddd;font-weight:700}
-  input[type="number"]{width:56px;border-radius:6px;padding:6px;border:1px solid #333;background:#111;color:#fff}
-  .btn{display:inline-block;background:var(--accent);color:#002;padding:10px 14px;border-radius:20px;margin:10px 4px;font-weight:700;border:none}
-  .muted{color:#a7a7a7;font-size:0.9rem}
-  @media(max-width:420px){ input[type="number"]{width:44px;font-size:14px} th,td{font-size:0.86rem} }
-  .playoff, .finals {margin-top:12px;padding:8px;border-radius:8px;background:rgba(0,0,0,0.12)}
-  .small{font-size:0.85rem;color:#cfcfcf}
+  :root{--bg:#070707;--accent:#00ff90;--card:#111}
+  body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(#0b0b0b,#070707);color:#fff}
+  .wrap{padding:14px;max-width:900px;margin:0 auto}
+  h1{color:var(--accent);text-align:center;margin:6px 0;font-size:1.3rem}
+  table{width:100%;border-collapse:collapse;margin:12px 0}
+  th,td{padding:8px;border:1px solid rgba(255,255,255,0.06);text-align:center}
+  th{background:rgba(0,0,0,0.3);color:#e6ffe9}
+  input[type="number"]{width:60px;padding:6px;border-radius:6px;border:1px solid #333;background:#0e0e0e;color:#fff}
+  .btn{background:var(--accent);color:#002;border:none;padding:10px 14px;border-radius:20px;font-weight:700;cursor:pointer}
+  .section{background:var(--card);padding:12px;border-radius:10px;margin-top:12px;box-shadow:0 6px 20px rgba(0,255,144,0.04)}
+  .small{color:#cfcfcf;font-size:0.9rem}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:8px}
+  @media(max-width:480px){ input[type="number"]{width:48px} th,td{font-size:0.85rem} .row{flex-direction:column} }
+  #ball{position:fixed;width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 30% 35%, #d6ffea,#00ff90);box-shadow:0 8px 30px rgba(0,255,144,0.12);z-index:40}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>🏓 Round Robin — Tournament</h1>
+    <h1>Table Tennis Champions</h1>
 
-    <div class="section">
-      <h3 class="small">Matches</h3>
+    <div class="section" id="matchesSection">
+      <h2 class="small">Round-robin Matches</h2>
       <div style="overflow:auto">
         <table id="matchesTable">
-          <thead><tr><th>#</th><th>Player 1</th><th>Score</th><th>Player 2</th><th>Score</th></tr></thead>
+          <thead><tr><th>#</th><th>Player 1</th><th>Score 1</th><th>Player 2</th><th>Score 2</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
-      <div style="text-align:center"><button id="updateBtn" class="btn">Update Points</button></div>
-      <div class="muted small">Enter match scores then tap Update Points to recalc standings.</div>
+      <div style="text-align:center"><button id="updatePoints" class="btn">Update Points</button></div>
+      <div class="small" style="text-align:center;margin-top:6px">Fill match scores then tap Update Points</div>
     </div>
 
-    <div class="section">
-      <h3 class="small">Points Table</h3>
+    <div class="section" id="pointsSection">
+      <h2 class="small">Points Table</h2>
       <div style="overflow:auto">
         <table id="pointsTable">
           <thead><tr><th>Pos</th><th>Player</th><th>Played</th><th>W</th><th>L</th><th>Pts</th><th>NPR</th></tr></thead>
@@ -47,87 +47,86 @@
       </div>
     </div>
 
-    <div id="playoffBox" class="section" style="display:none">
-      <h3 class="small">Playoffs (Top 4)</h3>
+    <div class="section" id="playoffBox" style="display:none">
+      <h2 class="small">Playoffs</h2>
       <div id="playoffsArea"></div>
     </div>
 
-    <div id="finalBox" class="section" style="display:none">
-      <h3 class="small">Final</h3>
+    <div class="section" id="finalBox" style="display:none">
+      <h2 class="small">Final</h2>
       <div id="finalArea"></div>
     </div>
-
   </div>
 
-<script>
-/* Read selected players from URL param */
-const url = new URL(window.location.href);
-const param = url.searchParams.get('players') || '[]';
-let selectedPlayers;
-try { selectedPlayers = JSON.parse(decodeURIComponent(param)); }
-catch(e){ selectedPlayers = []; }
+  <!-- Moving Next Ball purely decorative -->
+  <div id="ball"></div>
 
-/* Safety: if none provided, default to all 7 (for local testing) */
-if(!Array.isArray(selectedPlayers) || selectedPlayers.length===0){
+<script>
+/*
+  Expected image files in /images/
+  e.g. images/kartik.jpg (lowercase filenames recommended).
+  Players list can be pulled from URL param 'players' (encoded JSON) else default all.
+*/
+const url = new URL(window.location.href);
+let selectedPlayers;
+try {
+  selectedPlayers = JSON.parse(decodeURIComponent(url.searchParams.get('players') || 'null')) || 
+    ["Kartik","Priyansh","Mradul","Bhavya","Arnav","Kautik","Mann"];
+} catch(e){
   selectedPlayers = ["Kartik","Priyansh","Mradul","Bhavya","Arnav","Kautik","Mann"];
 }
 
-/* Generate all unique round robin fixtures then shuffle */
-function genFixtures(players){
-  const list=[];
-  for(let i=0;i<players.length;i++){
-    for(let j=i+1;j<players.length;j++){
-      list.push({p1:players[i], p2:players[j], s1: '', s2: ''});
+// Normalize names (keep as-is; filenames must match how you saved them)
+const players = selectedPlayers.slice();
+
+// Utilities and state
+let matches = []; // {p1,p2,s1,s2}
+let stats = {};   // per player
+
+// create round-robin fixtures (all pairs) and shuffle
+function genFixtures(list){
+  const arr = [];
+  for(let i=0;i<list.length;i++){
+    for(let j=i+1;j<list.length;j++){
+      arr.push({p1:list[i], p2:list[j], s1:'', s2:''});
     }
   }
-  // shuffle
-  for(let i=list.length-1;i>0;i--){
+  for(let i=arr.length-1;i>0;i--){
     const r=Math.floor(Math.random()*(i+1));
-    [list[i],list[r]]=[list[r],list[i]];
+    [arr[i], arr[r]] = [arr[r], arr[i]];
   }
-  return list;
+  return arr;
 }
 
-let matches = genFixtures(selectedPlayers);
-
-/* create match rows */
+// render match input table
 const matchesTbody = document.querySelector('#matchesTable tbody');
 function renderMatches(){
-  matchesTbody.innerHTML = '';
-  matches.forEach((m, idx)=>{
+  matchesTbody.innerHTML='';
+  matches.forEach((m,idx)=>{
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${idx+1}</td>
       <td>${m.p1}</td>
-      <td><input type="number" min="0" step="1" id="m_s1_${idx}" value="${m.s1}"></td>
+      <td><input type="number" min="0" id="m_s1_${idx}" value="${m.s1}"></td>
       <td>${m.p2}</td>
-      <td><input type="number" min="0" step="1" id="m_s2_${idx}" value="${m.s2}"></td>`;
+      <td><input type="number" min="0" id="m_s2_${idx}" value="${m.s2}"></td>`;
     matchesTbody.appendChild(tr);
   });
 }
-renderMatches();
 
-/* stats object */
-let stats = {};
+// points calculation
 function resetStats(){
   stats = {};
-  selectedPlayers.forEach(p => {
-    stats[p] = {played:0, won:0, lost:0, points:0, scored:0, conceded:0, npr:0};
-  });
+  players.forEach(p => stats[p] = {played:0, won:0, lost:0, points:0, scored:0, conceded:0, npr:0});
 }
 
-/* update points from inputs */
 function updatePoints(){
   resetStats();
   matches.forEach((m,idx)=>{
-    const s1 = parseInt(document.getElementById(`m_s1_${idx}`).value) || 0;
-    const s2 = parseInt(document.getElementById(`m_s2_${idx}`).value) || 0;
+    const v1 = document.getElementById(`m_s1_${idx}`).value;
+    const v2 = document.getElementById(`m_s2_${idx}`).value;
+    if(v1 === '' && v2 === '') return; // unplayed
+    const s1 = parseInt(v1 || 0), s2 = parseInt(v2 || 0);
     m.s1 = s1; m.s2 = s2;
-    // skip if both zero and unplayed? We'll count zero-zero as played if user typed zeros.
-    const played = (s1 !== '' || s2 !== '') && !(s1===0 && s2===0 && document.getElementById(`m_s1_${idx}`).value==='' && document.getElementById(`m_s2_${idx}`).value==='');
-    // treat empty as 0 but not played - simpler: if both input boxes blank -> skip
-    const blank1 = document.getElementById(`m_s1_${idx}`).value === '';
-    const blank2 = document.getElementById(`m_s2_${idx}`).value === '';
-    if(blank1 && blank2) return;
     stats[m.p1].played++; stats[m.p2].played++;
     stats[m.p1].scored += s1; stats[m.p1].conceded += s2;
     stats[m.p2].scored += s2; stats[m.p2].conceded += s1;
@@ -135,120 +134,200 @@ function updatePoints(){
     else if(s2 > s1){ stats[m.p2].won++; stats[m.p1].lost++; stats[m.p2].points += 2; }
     else { stats[m.p1].points += 1; stats[m.p2].points += 1; }
   });
+  players.forEach(p => stats[p].npr = stats[p].scored - stats[p].conceded);
+  renderPoints();
+  renderPlayoffs(); // update playoff UI based on latest ordering
+}
 
-  // compute NPR
-  selectedPlayers.forEach(p => {
-    stats[p].npr = stats[p].scored - stats[p].conceded;
+// render points table sorted by points then npr
+const pointsTbody = document.querySelector('#pointsTable tbody');
+function renderPoints(){
+  const order = players.slice().sort((a,b)=>{
+    if(stats[b].points !== stats[a].points) return stats[b].points - stats[a].points;
+    return stats[b].npr - stats[a].npr;
   });
+  pointsTbody.innerHTML = '';
+  order.forEach((p,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td>${p}</td><td>${stats[p].played}</td><td>${stats[p].won}</td><td>${stats[p].lost}</td><td>${stats[p].points}</td><td>${stats[p].npr}</td>`;
+    pointsTbody.appendChild(tr);
+  });
+}
 
-  // sort players by points desc then npr desc
-  const sorted = [...selectedPlayers].sort((a,b)=>{
+// Playoffs UI and logic
+const playoffBox = document.getElementById('playoffBox');
+const playoffsArea = document.getElementById('playoffsArea');
+const finalBox = document.getElementById('finalBox');
+const finalArea = document.getElementById('finalArea');
+
+let lastSorted = []; // cached sorted by points
+
+function renderPlayoffs(){
+  // only show after points exist
+  lastSorted = players.slice().sort((a,b)=>{
     if(stats[b].points !== stats[a].points) return stats[b].points - stats[a].points;
     return stats[b].npr - stats[a].npr;
   });
 
-  renderPoints(sorted);
-  renderPlayoffsAndFinals(sorted);
-}
+  // hide or show
+  if(players.length > 5){
+    playoffBox.style.display='block';
+    finalBox.style.display='block';
+    const p1 = lastSorted[0], p2 = lastSorted[1], p3 = lastSorted[2], p4 = lastSorted[3];
 
-function renderPoints(sorted){
-  const tbody = document.querySelector('#pointsTable tbody');
-  tbody.innerHTML = '';
-  sorted.forEach((p, idx)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${idx+1}</td><td>${p}</td><td>${stats[p].played}</td><td>${stats[p].won}</td><td>${stats[p].lost}</td><td>${stats[p].points}</td><td>${stats[p].npr}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-/* playoffs & finals generation with input scores support */
-function renderPlayoffsAndFinals(sorted){
-  const playBox = document.getElementById('playoffBox');
-  const finalBox = document.getElementById('finalBox');
-  const playArea = document.getElementById('playoffsArea');
-  const finArea = document.getElementById('finalArea');
-
-  playArea.innerHTML = ''; finArea.innerHTML = '';
-
-  if(selectedPlayers.length > 5){
-    // enable playoffs
-    playBox.style.display = 'block'; finalBox.style.display='block';
-    const p1 = sorted[0], p2 = sorted[1], p3 = sorted[2], p4 = sorted[3];
-
-    // Qualifier 1: p1 vs p2
-    const q1 = document.createElement('div');
-    q1.className='playoff';
-    q1.innerHTML = `<div><strong>Qualifier 1:</strong> ${p1} vs ${p2}</div>
-      <div style="margin-top:8px"><input id="q1_s1" type="number" min="0" placeholder="s1"> vs <input id="q1_s2" type="number" min="0" placeholder="s2"></div>`;
-
-    // Eliminator: p3 vs p4
-    const e1 = document.createElement('div');
-    e1.className='playoff';
-    e1.innerHTML = `<div><strong>Eliminator:</strong> ${p3} vs ${p4}</div>
-      <div style="margin-top:8px"><input id="e1_s1" type="number" min="0" placeholder="s1"> vs <input id="e1_s2" type="number" min="0" placeholder="s2"></div>`;
-
-    playArea.appendChild(q1); playArea.appendChild(e1);
-
-    // Qualifier 2 and Final will be computed live when user clicks "Compute Playoffs" button
-    const computeBtn = document.createElement('button');
-    computeBtn.className = 'btn';
-    computeBtn.innerText = 'Compute Playoffs';
-    computeBtn.onclick = computePlayoffs;
-    playArea.appendChild(computeBtn);
-
-    function computePlayoffs(){
-      // read qualifier1 and eliminator scores
-      const q1s1 = parseInt(document.getElementById('q1_s1').value) || 0;
-      const q1s2 = parseInt(document.getElementById('q1_s2').value) || 0;
-      const e1s1 = parseInt(document.getElementById('e1_s1').value) || 0;
-      const e1s2 = parseInt(document.getElementById('e1_s2').value) || 0;
-
-      let q1Winner, q1Loser, eWinner;
-      if(q1s1 > q1s2){ q1Winner = p1; q1Loser = p2; } else if(q1s2 > q1s1){ q1Winner = p2; q1Loser = p1; } else { q1Winner = p1; q1Loser = p2; } // tie fallback
-      if(e1s1 > e1s2){ eWinner = p3; } else if(e1s2 > e1s1){ eWinner = p4; } else { eWinner = p3; }
-
-      // Qualifier 2: q1Loser vs eWinner
-      const q2Html = document.createElement('div');
-      q2Html.className='playoff';
-      q2Html.innerHTML = `<div><strong>Qualifier 2:</strong> ${q1Loser} vs ${eWinner}</div>
-        <div style="margin-top:8px"><input id="q2_s1" type="number" min="0" placeholder="s1"> vs <input id="q2_s2" type="number" min="0" placeholder="s2"></div>
-        <div style="margin-top:6px"><button class="btn" id="q2Compute">Compute Q2 & Final</button></div>`;
-      // replace/append
-      // remove any existing q2 container first
-      const oldQ2 = document.getElementById('q2Container');
-      if(oldQ2) oldQ2.remove();
-      q2Html.id = 'q2Container';
-      playArea.appendChild(q2Html);
-
-      // when q2 computed, show final
-      document.getElementById('q2Compute').onclick = ()=>{
-        const q2s1 = parseInt(document.getElementById('q2_s1').value) || 0;
-        const q2s2 = parseInt(document.getElementById('q2_s2').value) || 0;
-        let q2Winner = q2s1 > q2s2 ? q1Loser : (q2s2 > q2s1 ? eWinner : q1Loser);
-        // show final area
-        finArea.innerHTML = `<div class="finals"><strong>Final:</strong> ${q1Winner} vs ${q2Winner}</div>
-          <div style="margin-top:8px"><input id="f_s1" type="number" min="0" placeholder="s1"> vs <input id="f_s2" type="number" min="0" placeholder="s2"></div>
-          <div style="margin-top:8px" class="small">Enter final score above. Results don't alter round-robin points automatically.</div>`;
-      };
-    }
-
+    playoffsArea.innerHTML = `
+      <div style="margin-bottom:10px"><strong>Qualifier 1:</strong> ${p1} vs ${p2}
+        <div class="row"><input id="q1_s1" type="number" placeholder="s1"> vs <input id="q1_s2" type="number" placeholder="s2"></div>
+      </div>
+      <div style="margin-bottom:10px"><strong>Eliminator:</strong> ${p3} vs ${p4}
+        <div class="row"><input id="e_s1" type="number" placeholder="s1"> vs <input id="e_s2" type="number" placeholder="s2"></div>
+      </div>
+      <div style="margin-top:6px"><button id="computeQ2" class="btn">Compute Q1 & Eliminator → Setup Q2</button></div>
+    `;
+    document.getElementById('computeQ2').onclick = computeQ2;
+    finalArea.innerHTML = ''; // reset final area until Q2 is computed
   } else {
-    // direct final between top2
-    playBox.style.display = 'none';
-    finalBox.style.display = 'block';
-    const finalists = sorted.slice(0,2);
-    finArea.innerHTML = `<div class="finals"><strong>Final:</strong> ${finalists[0]} vs ${finalists[1]}</div>
-      <div style="margin-top:8px"><input id="f_s1" type="number" min="0" placeholder="s1"> vs <input id="f_s2" type="number" min="0" placeholder="s2"></div>`;
+    // direct final top 2
+    playoffBox.style.display='none';
+    finalBox.style.display='block';
+    const finalists = lastSorted.slice(0,2);
+    finalArea.innerHTML = `
+      <div><strong>Final:</strong> ${finalists[0]} vs ${finalists[1]}</div>
+      <div class="row"><input id="f_s1" type="number" placeholder="s1"> vs <input id="f_s2" type="number" placeholder="s2"></div>
+      <div style="margin-top:10px"><button id="submitFinal" class="btn">Submit Final</button></div>
+    `;
+    document.getElementById('submitFinal').onclick = ()=> finishTournament(finalists[0],finalists[1], null);
   }
 }
 
-/* attach update button */
-document.getElementById('updateBtn').addEventListener('click', updatePoints);
+// compute Q2 participants based on q1 and eliminator inputs
+function computeQ2(){
+  const p1 = lastSorted[0], p2 = lastSorted[1], p3 = lastSorted[2], p4 = lastSorted[3];
+  const q1s1 = parseInt(document.getElementById('q1_s1').value || 0);
+  const q1s2 = parseInt(document.getElementById('q1_s2').value || 0);
+  const es1 = parseInt(document.getElementById('e_s1').value || 0);
+  const es2 = parseInt(document.getElementById('e_s2').value || 0);
 
-/* initial calc to show empty table */
-updatePoints();
+  // Determine Q1 winner & loser
+  let q1Winner = (q1s1 > q1s2) ? p1 : ((q1s2 > q1s1) ? p2 : p1);
+  let q1Loser  = (q1Winner === p1) ? p2 : p1;
 
-/* optional: allow quickly clearing all scores */
+  // Eliminator winner
+  let eWinner = (es1 > es2) ? p3 : ((es2 > es1) ? p4 : p3);
+  let eLoser  = (eWinner === p3) ? p4 : p3;
+
+  // Now Q2 = q1Loser vs eWinner
+  playoffsArea.innerHTML += `
+    <div style="margin-top:10px"><strong>Qualifier 2:</strong> ${q1Loser} vs ${eWinner}
+      <div class="row"><input id="q2_s1" type="number" placeholder="s1"> vs <input id="q2_s2" type="number" placeholder="s2"></div>
+    </div>
+    <div style="margin-top:10px"><button id="computeFinal" class="btn">Compute Q2 → Setup Final</button></div>
+  `;
+
+  document.getElementById('computeFinal').onclick = ()=> {
+    const q2s1 = parseInt(document.getElementById('q2_s1').value || 0);
+    const q2s2 = parseInt(document.getElementById('q2_s2').value || 0);
+    let q2Winner = (q2s1 > q2s2) ? q1Loser : ((q2s2 > q2s1) ? eWinner : q1Loser);
+    let q2Loser  = (q2Winner === q1Loser) ? eWinner : q1Loser;
+
+    // Final: q1Winner vs q2Winner
+    finalArea.innerHTML = `
+      <div><strong>Final:</strong> ${q1Winner} vs ${q2Winner}</div>
+      <div class="row"><input id="f_s1" type="number" placeholder="s1"> vs <input id="f_s2" type="number" placeholder="s2"></div>
+      <div style="margin-top:10px"><button id="submitFinal" class="btn">Submit Final</button></div>
+    `;
+    document.getElementById('submitFinal').onclick = ()=> finishTournament(q1Winner, q2Winner, {q1Winner,q1Loser,eWinner,eLoser,q2Winner,q2Loser});
+  };
+}
+
+// finish final: determine placements, save to localStorage and redirect to leaderboard
+function finishTournament(finalP1, finalP2, playoffMeta){
+  const s1 = parseInt(document.getElementById('f_s1').value || 0);
+  const s2 = parseInt(document.getElementById('f_s2').value || 0);
+  let first = s1 > s2 ? finalP1 : finalP2;
+  let second = s1 > s2 ? finalP2 : finalP1;
+
+  // compute third, fourth based on playoff meta if present
+  let third = null, fourth = null;
+  let rest = [];
+
+  if(playoffMeta){
+    // third = loser of Q2
+    third = playoffMeta.q2Loser || null;
+    // fourth = eliminator loser (eLoser)
+    fourth = playoffMeta.eLoser || null;
+    // remaining (5-7) -> players not in top4
+    const top4 = new Set([playoffMeta.q1Winner, playoffMeta.q1Loser, playoffMeta.eWinner, playoffMeta.eLoser, playoffMeta.q2Winner, playoffMeta.q2Loser]);
+    rest = players.filter(p => !top4.has(p));
+    // If rest fewer than needed, fill using points ordering excluding top 4:
+    if(rest.length < 0) rest = [];
+  } else {
+    // no playoffs (<=5 players), third = next by points
+    const ordered = players.slice().sort((a,b)=>{
+      if(stats[b].points !== stats[a].points) return stats[b].points - stats[a].points;
+      return stats[b].npr - stats[a].npr;
+    });
+    third = ordered[2] || null;
+    fourth = ordered[3] || null;
+    rest = ordered.slice(4);
+  }
+
+  // For safety: if third/fourth are null, try to pick from points order excluding first & second
+  const orderedPts = players.slice().sort((a,b)=>{
+    if(stats[b].points !== stats[a].points) return stats[b].points - stats[a].points;
+    return stats[b].npr - stats[a].npr;
+  });
+  // build final placements 1..7
+  const placed = [first, second];
+  // pick third
+  if(!third) {
+    for(const p of orderedPts) if(!placed.includes(p)){ third = p; break; }
+  }
+  if(third) placed.push(third);
+  // pick fourth
+  if(!fourth) {
+    for(const p of orderedPts) if(!placed.includes(p)){ fourth = p; break; }
+  }
+  if(fourth) placed.push(fourth);
+  // remaining fill by points order
+  for(const p of orderedPts) if(!placed.includes(p)) placed.push(p);
+  // ensure length 7 (pad with empty if necessary)
+  while(placed.length < players.length) placed.push('');
+
+  // final placements array of length players.length in order 1..N
+  const placements = placed.slice(0, players.length);
+
+  // Save to localStorage
+  localStorage.setItem('leaderboardPositions', JSON.stringify(placements));
+  // redirect to leaderboard
+  window.location.href = 'leaderboard.html';
+}
+
+// initialize
+function init(){
+  matches = genFixtures(players);
+  renderMatches();
+  resetStats();
+  renderPoints();
+  renderPlayoffs();
+
+  // decorative moving ball animation
+  const ball = document.getElementById('ball');
+  let x = window.innerWidth/2 - 28, y = window.innerHeight - 120;
+  let vx = 2.4 + Math.random()*1.6, vy = -2.4 - Math.random()*1.6;
+  function step(){
+    x += vx; y += vy;
+    if(x <= 6 || x >= window.innerWidth - 62) vx *= -1;
+    if(y <= 6 || y >= window.innerHeight - 62) vy *= -1;
+    ball.style.left = x + 'px'; ball.style.top = y + 'px';
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+document.getElementById('updatePoints').addEventListener('click', updatePoints);
+window.addEventListener('load', init);
+window.addEventListener('resize', ()=>{ /* no-op for now */ });
 </script>
 </body>
 </html>

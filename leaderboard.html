@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Leaderboard - Demon Throne</title>
+<style>
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial}
+  body{
+    background: radial-gradient(circle at 30% 20%, #fff6c6, transparent 20%),
+                linear-gradient(180deg,#ffd6a6,#ff7b95);
+    overflow:hidden;
+    color:#111;
+  }
+  .stage{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    box-sizing:border-box;
+  }
+  /* background demon image covers stage */
+  .bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('images/leaderdemon.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: contrast(0.95) saturate(1.05);
+}
+
+@media (max-width: 768px) {
+  .bg {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-color: black;
+  }
+}
+
+  /* overlay podium positions using absolute coordinates tuned for typical image ratio.
+     You might need to tweak left/top values slightly depending on leaderdemon.jpg aspect.
+  */
+  .slot{
+    position:absolute;width:96px;height:96px;border-radius:50%;overflow:hidden;border:4px solid rgba(255,255,255,0.85);box-shadow: 0 12px 40px rgba(0,0,0,0.45);
+    background:#222;
+    display:flex;align-items:center;justify-content:center;
+    transform-origin:center bottom;
+  }
+  /* Big throne (1st) - center */
+  .slot.first{width:210px;height:210px;border-radius:50%;left:50%;top:18%;transform:translateX(-50%);border-width:6px}
+  /* Left small demon (2nd) */
+  .slot.second{left:22%;top:28%}
+  /* Right small demon (3rd) */
+  .slot.third{right:22%;top:28%}
+  /* Kneeling people (4..7) lower row */
+  .slot.fourth{left:22%;bottom:14%}
+  .slot.fifth{left:38%;bottom:10%}
+  .slot.sixth{left:62%;bottom:10%}
+  .slot.seventh{left:78%;bottom:14%}
+
+  .slot img{width:100%;height:100%;object-fit:cover;display:block}
+  /* bouncing animation */
+  @keyframes bounce {
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-14px)}
+  }
+  .slot img{animation: bounce 1.6s ease-in-out infinite}
+
+  /* confetti for celebration */
+  .confetti{position:absolute;width:8px;height:12px;border-radius:2px;pointer-events:none;opacity:0.95}
+  @keyframes fall {
+    0%{transform:translateY(-10vh) rotate(0)}
+    100%{transform:translateY(110vh) rotate(720deg); opacity:0.95}
+  }
+
+  /* small footer */
+  .footer{position:absolute;right:10px;bottom:8px;color:rgba(10,10,10,0.6);font-weight:600}
+  @media(max-width:420px){
+    .slot.first{width:160px;height:160px;top:14%}
+    .slot{width:72px;height:72px;border-width:3px}
+    .slot.second{left:16%;top:30%}
+    .slot.third{right:16%;top:30%}
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="bg" id="bg"></div>
+
+    <!-- 1st -->
+    <div id="pos1" class="slot first"><img src="" alt="1st"></div>
+    <!-- 2nd -->
+    <div id="pos2" class="slot second"><img src="" alt="2nd"></div>
+    <!-- 3rd -->
+    <div id="pos3" class="slot third"><img src="" alt="3rd"></div>
+    <!-- 4th -->
+    <div id="pos4" class="slot fourth"><img src="" alt="4th"></div>
+    <!-- 5th -->
+    <div id="pos5" class="slot fifth"><img src="" alt="5th"></div>
+    <!-- 6th -->
+    <div id="pos6" class="slot sixth"><img src="" alt="6th"></div>
+    <!-- 7th -->
+    <div id="pos7" class="slot seventh"><img src="" alt="7th"></div>
+
+    <div class="footer">MBA TECH — Table Tennis</div>
+  </div>
+
+<script>
+/*
+  Expect an array in localStorage 'leaderboardPositions' with placements [1,2,3,4,5,6,7]
+  Image file for each player should be at images/<lowercase or same name>.jpg
+  The background image should be images/leaderdemon.jpg
+*/
+
+// read placements
+let placements = JSON.parse(localStorage.getItem('leaderboardPositions') || 'null');
+if(!Array.isArray(placements)){
+  // fallback demo order
+  placements = ["Kartik","Priyansh","Mradul","Bhavya","Arnav","Kautik","Mann"];
+}
+
+// helper to attempt multiple file name variants (lowercase first)
+function playerImgFor(name){
+  if(!name) return '';
+  const attempts = [
+    `images/${name}.jpg`,
+    `images/${name}.jpeg`,
+    `images/${name}.png`,
+    `images/${name.toLowerCase()}.jpg`,
+    `images/${name.toLowerCase()}.png`
+  ];
+  // create an <img> element but we will set src in order and let browser load; choose first that exists via quick ping using Image() loader
+  return attempts; // return attempts array; loader will set first that loads
+}
+
+function setImgForSlot(slotId, name){
+  const slot = document.getElementById(slotId);
+  const imgEl = slot.querySelector('img');
+  const sources = playerImgFor(name);
+  // try to find an image that loads
+  let found = false;
+  let idx = 0;
+  function tryNext(){
+    if(idx >= sources.length){ imgEl.src = ''; return; }
+    const src = sources[idx++];
+    const test = new Image();
+    test.onload = ()=> { imgEl.src = src; found = true; };
+    test.onerror = ()=> { tryNext(); };
+    test.src = src;
+  }
+  tryNext();
+}
+
+// map placements 1..7 to slots (1->pos1, 2->pos2, ...)
+for(let i=0;i<7;i++){
+  const slotId = 'pos' + (i+1);
+  setImgForSlot(slotId, placements[i] || '');
+}
+
+// confetti generator - few colorful pieces for celebration
+function makeConfetti(){
+  const colors = ['#ffea61','#ff5c7c','#8ef2d7','#ffd28f','#c6a1ff'];
+  for(let i=0;i<40;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.background = colors[Math.floor(Math.random()*colors.length)];
+    c.style.left = Math.random()*100 + 'vw';
+    const size = 6 + Math.random()*10;
+    c.style.width = (size*0.6)+'px';
+    c.style.height = size + 'px';
+    c.style.borderRadius = (Math.random()*3)+'px';
+    c.style.top = (-20 - Math.random()*40) + 'vh';
+    c.style.opacity = 0.9;
+    c.style.transform = `rotate(${Math.random()*360}deg)`;
+    c.style.animation = `fall ${3+Math.random()*2}s linear ${Math.random()*1}s forwards`;
+    document.body.appendChild(c);
+    // cleanup after animation
+    setTimeout(()=> c.remove(), 6000);
+  }
+}
+window.addEventListener('load', ()=>{ makeConfetti(); setInterval(makeConfetti, 4500); });
+
+</script>
+</body>
+</html>
