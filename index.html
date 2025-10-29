@@ -1,159 +1,494 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Table Tennis Champions</title>
-  <style>
-    body {
-      margin: 0;
-      background: radial-gradient(circle at center, #0b0b0b 40%, #000 100%);
-      overflow: hidden;
-      font-family: 'Poppins', sans-serif;
-      color: #fff;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Table Tennis Champions — Select Players</title>
+<style>
+  :root{
+    --bg:#070707;
+    --accent:#00ff90;
+    --muted:#1a1a1a;
+    --card:#2b2b2b;
+  }
+  html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b0b0b 0%, #050505 60%);font-family:Inter,system-ui,Arial;}
+  .app {
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    align-items:center;
+    padding:18px 12px 34px;
+    box-sizing:border-box;
+    color:#fff;
+  }
 
-```
-h1 {
-  text-align: center;
-  color: #00ff90;
-  margin-top: 20px;
-  font-size: 1.8rem;
-}
+  header{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  h1{font-size:1.3rem;margin:0;color:var(--accent)}
+  .tag{font-size:0.85rem;color:#aaa;font-style:italic}
 
-.footer {
-  position: fixed;
-  bottom: 10px;
-  right: 15px;
-  font-style: italic;
-  color: #aaa;
-  font-size: 0.9rem;
-}
+  /* BAT container */
+  .bat-wrap{
+    width:86%;
+    max-width:360px;
+    aspect-ratio: 3/4; /* tall */
+    position:relative;
+    margin:12px 0 20px;
+  }
 
-.bat {
-  position: relative;
-  width: 300px;
-  height: 450px;
-  background: #333;
-  border-radius: 150px 150px 20px 20px;
-  margin: 40px auto;
-  box-shadow: inset 0 0 20px rgba(0, 255, 100, 0.3), 0 0 10px rgba(0, 255, 100, 0.2);
-  overflow: hidden;
-}
-
-.player {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  border: 3px solid white;
-  transition: transform 0.3s, border-color 0.3s;
-}
-
-.player.selected {
-  border-color: #00ff90;
-  transform: scale(1.1);
-}
-
-.next-button {
-  display: none;
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #00ff90 40%, #00cc70 100%);
-  color: #000;
-  font-weight: bold;
-  text-align: center;
-  line-height: 80px;
-  box-shadow: 0 0 15px rgba(0,255,144,0.5);
-}
-
-@media (max-width: 600px) {
+  /* Bat shape: rounded rectangle with tall top (semi-circle) */
   .bat {
-    width: 230px;
-    height: 350px;
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,var(--card), #333);
+    border-radius: 42% 42% 12px 12px / 48% 48% 12px 12px;
+    box-shadow:0 0 30px rgba(0,255,144,0.06), inset 0 0 30px rgba(0,0,0,0.6);
+    overflow:visible;
   }
-  .player {
-    width: 45px;
-    height: 45px;
-  }
-  .next-button {
-    width: 70px;
-    height: 70px;
-    line-height: 70px;
-    font-size: 0.9rem;
-  }
-}
-```
 
-  </style>
+  /* inner area overlay (for subtle border) */
+  .bat::after{
+    content:"";
+    position:absolute;left:6px;right:6px;top:6px;bottom:36px;
+    border-radius:inherit;
+    box-shadow: 0 0 24px rgba(0,255,144,0.08) inset;
+    pointer-events:none;
+  }
+
+  /* player circles */
+  .player {
+    position:absolute;
+    width:64px; height:64px;
+    border-radius:50%;
+    border:4px solid #ffffffcc;
+    box-sizing:border-box;
+    background-size:cover;
+    background-position:center;
+    touch-action:manipulation;
+    transition:transform .18s ease, border-color .18s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,.6);
+  }
+  .player.selected{
+    border-color:var(--accent);
+    transform:scale(1.06);
+    box-shadow: 0 6px 18px rgba(0,255,144,0.12);
+  }
+
+  /* Next button ball — moving across screen */
+  .next-ball {
+    position:fixed;
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:18px;
+    background: radial-gradient(circle at 35% 35%, #afffd8 0%, var(--accent) 40%, #00cc70 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    color:#002;
+    box-shadow:0 6px 30px rgba(0,255,144,0.16);
+    z-index:80;
+    touch-action:none;
+    user-select:none;
+  }
+
+  .next-ball.locked{opacity:0.42; filter:grayscale(30%); pointer-events:none;}
+  .next-ball.ready{cursor:pointer; pointer-events:auto;}
+
+  /* small helper */
+  .hint{font-size:0.82rem;color:#bdbdbd;margin-top:8px}
+  @media (max-width:420px){
+    .player{width:54px;height:54px;border-width:3px}
+    .next-ball{width:64px;height:64px;font-size:0.95rem}
+  }
+</style>
 </head>
 <body>
-  <h1>Table Tennis Champions</h1>
-  <div class="bat" id="bat"></div>
-  <div class="footer">MBA TECH</div>
-  <div class="next-button" id="nextBtn">Next</div>
+<div class="app">
+  <header>
+    <h1>Table Tennis Champions</h1>
+    <div class="tag">MBA TECH</div>
+  </header>
 
-  <script>
-    const players = [
-      { name: "Kartik", img: "images/kartik.jpg" },
-      { name: "Priyansh", img: "images/priyansh.jpg" },
-      { name: "Mradul", img: "images/mradul.jpg" },
-      { name: "Bhavya", img: "images/bhavya.jpg" },
-      { name: "Arnav", img: "images/arnav.jpg" },
-      { name: "Kautik", img: "images/kautik.jpg" },
-      { name: "Mann", img: "images/mann.jpg" }
-    ];
+  <div class="bat-wrap" id="batWrap">
+    <div class="bat" id="bat"></div>
+  </div>
 
-    const bat = document.getElementById("bat");
-    const selected = new Set();
+  <div class="hint">Tap players to select. Select at least 3 players to proceed.</div>
+</div>
 
-    // Create player circles
-    players.forEach((p, i) => {
-      const el = document.createElement("div");
-      el.classList.add("player");
-      el.style.backgroundImage = `url('${p.img}')`;
-      el.dataset.name = p.name;
-      el.style.left = Math.random() * 200 + "px";
-      el.style.top = Math.random() * 350 + "px";
-      bat.appendChild(el);
+<!-- Next ball floats and bounces across whole viewport -->
+<div id="nextBall" class="next-ball locked">Next</div>
+
+<script>
+/* -------------------------
+   Setup players and images
+   -------------------------*/
+const players = [
+  { name: "Kartik", img: "images/kartik.jpg" },
+  { name: "Priyansh", img: "images/priyansh.jpg" },
+  { name: "Mradul", img: "images/mradul.jpg" },
+  { name: "Bhavya", img: "images/bhavya.jpg" },
+  { name: "Arnav", img: "images/arnav.jpg" },
+  { name: "Kautik", img: "images/kautik.jpg" },
+  { name: "Mann", img: "images/mann.jpg" }
+];
+
+/* -------------------------
+   Layout references
+   -------------------------*/
+const batWrap = document.getElementById('batWrap');
+const bat = document.getElementById('bat');
+const nextBall = document.getElementById('nextBall');
+
+/* We'll compute an inner play area representing the "bat interior".
+   To make collision math simpler, we treat the bat as a combination of:
+   - a rectangle region (lower part)
+   - a semicircle region on top
+   We'll keep circle particles inside that combined shape.
+*/
+
+let batRect;         // bounding rect on screen
+let semicenter;      // semicircle center {x,y}
+let semicRadius;     // radius of semicircle
+
+// Represent each moving player as an object
+const items = []; // {el, name, r, x, y, vx, vy, selected}
+
+/* create DOM circles and randomize starting positions
+   positions will be in local coordinates relative to bat's top-left.
+*/
+function createPlayers(){
+  batRect = bat.getBoundingClientRect();
+
+  // compute semicircle geometry:
+  // choose semicircle radius as ~45% of bat width (tuned visually)
+  semicRadius = batRect.width * 0.45;
+  // semicircle center located horizontally at bat center,
+  // vertically at (top + semicRadius)
+  semicenter = { x: batRect.width/2, y: semicRadius };
+
+  players.forEach((p, idx) => {
+    const el = document.createElement('div');
+    el.className = 'player';
+    el.title = p.name;
+    // fallback color if image missing
+    el.style.backgroundColor = '#666';
+    el.style.backgroundImage = `url(${p.img})`;
+    bat.appendChild(el);
+
+    // initial random position inside bat interior:
+    const r = (parseFloat(getComputedStyle(el).width) || 64) / 2;
+    let pos = randomPointInsideBat(r);
+
+    // random small velocity
+    const speed = 0.7 + Math.random()*0.9; // px per frame scaled later
+    const angle = Math.random()*Math.PI*2;
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+
+    const obj = { el, name:p.name, r, x:pos.x, y:pos.y, vx, vy, selected:false };
+    items.push(obj);
+
+    // set initial CSS
+    updateElPosition(obj);
+
+    // click/tap selects
+    el.addEventListener('click', (e)=>{
+      obj.selected = !obj.selected;
+      if(obj.selected) el.classList.add('selected'); else el.classList.remove('selected');
+      updateNextBallState();
+      e.stopPropagation();
     });
+  });
+}
 
-    // Random movement
-    setInterval(() => {
-      document.querySelectorAll(".player").forEach(el => {
-        el.style.left = Math.random() * 200 + "px";
-        el.style.top = Math.random() * 350 + "px";
-      });
-    }, 2000);
+/* get random point inside bat (combined rect + semicircle).
+   returns coordinates relative to bat's top-left.
+*/
+function randomPointInsideBat(radius){
+  const w = batRect.width, h = batRect.height;
+  const rectTop = semicRadius; // rectangle starts at y=semicRadius
+  const rectLeft = 0, rectRight = w;
 
-    // Click to select
-    bat.addEventListener("click", (e) => {
-      if (!e.target.classList.contains("player")) return;
-      e.target.classList.toggle("selected");
-      const name = e.target.dataset.name;
-      if (selected.has(name)) selected.delete(name);
-      else selected.add(name);
+  // Try random sampling until inside shape (fast for small count)
+  for(let tries=0; tries<200; tries++){
+    // choose either in rectangle region or in semicircle cap
+    const choose = Math.random() < 0.7 ? 'rect' : 'cap';
+    if(choose==='rect'){
+      const x = radius + Math.random()*(w - 2*radius);
+      const y = rectTop + radius + Math.random()*(h - rectTop - 2*radius);
+      // safety: ensure within bat bounding box
+      return {x,y};
+    } else {
+      // pick point inside semicircle: polar coords
+      const ang = Math.random()*Math.PI; // 0..PI (top semicircle)
+      const rr = Math.sqrt(Math.random()) * (semicRadius - radius);
+      const x = semicenter.x + rr*Math.cos(ang);
+      const y = semicenter.y - rr*Math.sin(ang); // semicircle extends above center
+      // check boundary: must be inside bat area (y>=0)
+      if(y > radius && x > radius && x < w-radius) return {x, y};
+    }
+  }
+  // fallback center
+  return {x: w/2, y: semicRadius + 30};
+}
 
-      // Show Next button if 3+ selected
-      const nextBtn = document.getElementById("nextBtn");
-      if (selected.size >= 3) nextBtn.style.display = "block";
-      else nextBtn.style.display = "none";
-    });
+/* place element CSS left/top based on object's x,y
+   (x,y are relative to bat's top-left)
+*/
+function updateElPosition(obj){
+  obj.el.style.left = (obj.x - obj.r) + 'px';
+  obj.el.style.top  = (obj.y - obj.r) + 'px';
+}
 
-    // Next button
-    document.getElementById("nextBtn").addEventListener("click", () => {
-      const selectedArray = Array.from(selected);
-      window.location.href = `tournament.html?players=${encodeURIComponent(JSON.stringify(selectedArray))}`;
-    });
-  </script>
+/* reflect velocity vector v against a normal nx,ny (normalized)
+   v' = v - 2*(v dot n) * n
+*/
+function reflect(vx,vy,nx,ny){
+  const dot = vx*nx + vy*ny;
+  return {
+    vx: vx - 2*dot*nx,
+    vy: vy - 2*dot*ny
+  };
+}
 
+/* check and handle collisions of a player circle with bat interior boundary.
+   If outside, compute nearest boundary normal and reflect.
+*/
+function constrainWithinBat(obj){
+  const w = batRect.width, h = batRect.height;
+  const r = obj.r;
+  // If inside rectangle portion (y >= semicRadius + r) just clamp to rect edges
+  if(obj.y >= semicRadius + r){
+    // left/right
+    if(obj.x - r <= 0){
+      obj.x = r; obj.vx = Math.abs(obj.vx);
+    } else if(obj.x + r >= w){
+      obj.x = w - r; obj.vx = -Math.abs(obj.vx);
+    }
+    // bottom
+    if(obj.y + r >= h){
+      obj.y = h - r; obj.vy = -Math.abs(obj.vy);
+    }
+    // top of rectangle (which is semicircle join)
+    if(obj.y - r <= semicRadius){
+      // move it to just below semicircle boundary
+      obj.y = semicRadius + r; obj.vy = Math.abs(obj.vy);
+    }
+  } else {
+    // inside semicircle region: distance from semicenter should be <= semicRadius - r
+    const dx = obj.x - semicenter.x;
+    const dy = obj.y - semicenter.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    const limit = semicRadius - r;
+    if(dist > limit){
+      // push back inside and reflect velocity across radial normal
+      const nx = dx / dist, ny = dy / dist; // outward normal from center
+      const push = dist - limit;
+      obj.x -= nx * push;
+      obj.y -= ny * push;
+      // reflect velocity
+      const newv = reflect(obj.vx, obj.vy, nx, ny);
+      obj.vx = newv.vx;
+      obj.vy = newv.vy;
+      // slightly damp velocity to avoid runaway
+      obj.vx *= 0.98; obj.vy *= 0.98;
+    }
+    // also ensure not crossing side walls
+    if(obj.x - r <= 0){ obj.x = r; obj.vx = Math.abs(obj.vx); }
+    if(obj.x + r >= w){ obj.x = w - r; obj.vx = -Math.abs(obj.vx); }
+    if(obj.y - r <= 0){ obj.y = r; obj.vy = Math.abs(obj.vy); }
+  }
+}
+
+/* fairly gentle pairwise collision avoidance between players to avoid overlaps,
+   using a simple separation impulse.
+*/
+function separatePairs(){
+  for(let i=0;i<items.length;i++){
+    for(let j=i+1;j<items.length;j++){
+      const a = items[i], b = items[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.sqrt(dx*dx + dy*dy) || 0.0001;
+      const minDist = a.r + b.r + 2; // small gap
+      if(dist < minDist){
+        const overlap = (minDist - dist);
+        const nx = dx / dist, ny = dy / dist;
+        // move each away proportionally
+        const push = overlap*0.5;
+        a.x -= nx * push;
+        a.y -= ny * push;
+        b.x += nx * push;
+        b.y += ny * push;
+        // swap small portion of velocities for lively collisions
+        const vxAvg = (a.vx - b.vx) * 0.12;
+        const vyAvg = (a.vy - b.vy) * 0.12;
+        a.vx += vxAvg; a.vy += vyAvg;
+        b.vx -= vxAvg; b.vy -= vyAvg;
+      }
+    }
+  }
+}
+
+/* main animation loop for player circles */
+let lastTime = performance.now();
+function animatePlayers(now){
+  const dt = Math.min((now - lastTime)/16.67, 4); // approx frame steps
+  lastTime = now;
+
+  // update positions
+  items.forEach(obj=>{
+    // small randomized wander to avoid monotonic paths
+    obj.vx += (Math.random()-0.5) * 0.06;
+    obj.vy += (Math.random()-0.5) * 0.06;
+
+    // clamp speed
+    const speed = Math.sqrt(obj.vx*obj.vx + obj.vy*obj.vy);
+    const maxSpeed = 1.8;
+    if(speed > maxSpeed){
+      obj.vx = (obj.vx/speed) * maxSpeed;
+      obj.vy = (obj.vy/speed) * maxSpeed;
+    }
+
+    obj.x += obj.vx * dt * 1.6;
+    obj.y += obj.vy * dt * 1.6;
+
+    // constrain inside bat
+    constrainWithinBat(obj);
+  });
+
+  // separate overlapping
+  separatePairs();
+
+  // apply to DOM
+  items.forEach(updateElPosition);
+
+  requestAnimationFrame(animatePlayers);
+}
+
+/* -------------------------
+   Next ball (global screen bouncing)
+   -------------------------*/
+let nb = {
+  el: nextBall,
+  w: nextBall.offsetWidth,
+  h: nextBall.offsetHeight,
+  x: window.innerWidth/2 - 36,
+  y: window.innerHeight - 110,
+  vx: 2.2 + Math.random()*1.6,
+  vy: -2.0 - Math.random()*1.8,
+  moving: true
+};
+
+function updateNextBallCSS(){
+  nb.el.style.left = nb.x + 'px';
+  nb.el.style.top  = nb.y + 'px';
+}
+/* bounce off screen edges */
+function animateNextBall(){
+  if(!nb.moving) return;
+  // move
+  nb.x += nb.vx;
+  nb.y += nb.vy;
+  // boundaries (account for ball size)
+  const bw = nb.w, bh=nb.h;
+  const maxX = window.innerWidth - bw, maxY = window.innerHeight - bh;
+  if(nb.x <= 8){
+    nb.x = 8; nb.vx = Math.abs(nb.vx);
+    nb.vx *= 0.99;
+  } else if(nb.x >= maxX - 8){
+    nb.x = maxX - 8; nb.vx = -Math.abs(nb.vx); nb.vx *= 0.99;
+  }
+  if(nb.y <= 8){
+    nb.y = 8; nb.vy = Math.abs(nb.vy); nb.vy *= 0.99;
+  } else if(nb.y >= maxY - 8){
+    nb.y = maxY - 8; nb.vy = -Math.abs(nb.vy); nb.vy *= 0.99;
+  }
+  // slight damping
+  nb.vx *= 0.9995; nb.vy *= 0.9995;
+  updateNextBallCSS();
+  requestAnimationFrame(animateNextBall);
+}
+
+/* enable Next ball only when >=3 players selected */
+function updateNextBallState(){
+  const selCount = items.filter(i=>i.selected).length;
+  if(selCount >= 3){
+    nextBall.classList.remove('locked');
+    nextBall.classList.add('ready');
+  } else {
+    nextBall.classList.add('locked');
+    nextBall.classList.remove('ready');
+  }
+}
+
+/* clicking nextBall navigates to tournament page with selected players */
+nextBall.addEventListener('click', ()=>{
+  if(!nextBall.classList.contains('ready')) return;
+  const selected = items.filter(i=>i.selected).map(i=>i.name);
+  // pass via URL param (encoded JSON)
+  const param = encodeURIComponent(JSON.stringify(selected));
+  window.location.href = `tournament.html?players=${param}`;
+});
+
+/* handle resize: recalc bat geometry and reposition items safely */
+function handleResize(){
+  // recompute batRect/semicenter relative to new size
+  const old = batRect;
+  batRect = bat.getBoundingClientRect();
+  semicRadius = batRect.width * 0.45;
+  semicenter = { x: batRect.width/2, y: semicRadius };
+
+  // try to keep items within new bounds; if outside, clamp inside
+  items.forEach(obj=>{
+    const r = obj.r;
+    // scale positions proportionally if bat size changed
+    if(old){
+      const sx = batRect.width / old.width;
+      const sy = batRect.height / old.height;
+      obj.x = obj.x * sx;
+      obj.y = obj.y * sy;
+    }
+    // clamp in bounds by reusing constrainWithinBat
+    constrainWithinBat(obj);
+    updateElPosition(obj);
+  });
+
+  // update next ball size and position constraints
+  nb.w = nextBall.offsetWidth;
+  nb.h = nextBall.offsetHeight;
+  // clamp next ball x,y
+  nb.x = Math.min(Math.max(nb.x, 8), window.innerWidth - nb.w - 8);
+  nb.y = Math.min(Math.max(nb.y, 8), window.innerHeight - nb.h - 8);
+  updateNextBallCSS();
+}
+
+/* initialize everything */
+function init(){
+  createPlayers();
+  handleResize();
+  requestAnimationFrame(animatePlayers);
+  requestAnimationFrame(animateNextBall);
+  // small randomize to avoid immediate overlap
+  setTimeout(()=>{ items.forEach(i=>{ i.vx += (Math.random()-0.5)*0.7; i.vy += (Math.random()-0.5)*0.7; });}, 100);
+}
+window.addEventListener('resize', handleResize);
+init();
+
+/* If user taps anywhere outside players, deselect all (optional) */
+bat.addEventListener('click', (e)=>{
+  // don't deselect; keep selection as-is (commented out)
+});
+
+</script>
 </body>
 </html>
