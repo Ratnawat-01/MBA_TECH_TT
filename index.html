@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Tennis Champions</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle at center, #0b0b0b 40%, #000 100%);
+      overflow: hidden;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+    }
+
+```
+h1 {
+  text-align: center;
+  color: #00ff90;
+  margin-top: 20px;
+  font-size: 1.8rem;
+}
+
+.footer {
+  position: fixed;
+  bottom: 10px;
+  right: 15px;
+  font-style: italic;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.bat {
+  position: relative;
+  width: 300px;
+  height: 450px;
+  background: #333;
+  border-radius: 150px 150px 20px 20px;
+  margin: 40px auto;
+  box-shadow: inset 0 0 20px rgba(0, 255, 100, 0.3), 0 0 10px rgba(0, 255, 100, 0.2);
+  overflow: hidden;
+}
+
+.player {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid white;
+  transition: transform 0.3s, border-color 0.3s;
+}
+
+.player.selected {
+  border-color: #00ff90;
+  transform: scale(1.1);
+}
+
+.next-button {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #00ff90 40%, #00cc70 100%);
+  color: #000;
+  font-weight: bold;
+  text-align: center;
+  line-height: 80px;
+  box-shadow: 0 0 15px rgba(0,255,144,0.5);
+}
+
+@media (max-width: 600px) {
+  .bat {
+    width: 230px;
+    height: 350px;
+  }
+  .player {
+    width: 45px;
+    height: 45px;
+  }
+  .next-button {
+    width: 70px;
+    height: 70px;
+    line-height: 70px;
+    font-size: 0.9rem;
+  }
+}
+```
+
+  </style>
+</head>
+<body>
+  <h1>Table Tennis Champions</h1>
+  <div class="bat" id="bat"></div>
+  <div class="footer">MBA TECH</div>
+  <div class="next-button" id="nextBtn">Next</div>
+
+  <script>
+    const players = [
+      { name: "Kartik", img: "images/kartik.jpg" },
+      { name: "Priyansh", img: "images/priyansh.jpg" },
+      { name: "Mradul", img: "images/mradul.jpg" },
+      { name: "Bhavya", img: "images/bhavya.jpg" },
+      { name: "Arnav", img: "images/arnav.jpg" },
+      { name: "Kautik", img: "images/kautik.jpg" },
+      { name: "Mann", img: "images/mann.jpg" }
+    ];
+
+    const bat = document.getElementById("bat");
+    const selected = new Set();
+
+    // Create player circles
+    players.forEach((p, i) => {
+      const el = document.createElement("div");
+      el.classList.add("player");
+      el.style.backgroundImage = `url('${p.img}')`;
+      el.dataset.name = p.name;
+      el.style.left = Math.random() * 200 + "px";
+      el.style.top = Math.random() * 350 + "px";
+      bat.appendChild(el);
+    });
+
+    // Random movement
+    setInterval(() => {
+      document.querySelectorAll(".player").forEach(el => {
+        el.style.left = Math.random() * 200 + "px";
+        el.style.top = Math.random() * 350 + "px";
+      });
+    }, 2000);
+
+    // Click to select
+    bat.addEventListener("click", (e) => {
+      if (!e.target.classList.contains("player")) return;
+      e.target.classList.toggle("selected");
+      const name = e.target.dataset.name;
+      if (selected.has(name)) selected.delete(name);
+      else selected.add(name);
+
+      // Show Next button if 3+ selected
+      const nextBtn = document.getElementById("nextBtn");
+      if (selected.size >= 3) nextBtn.style.display = "block";
+      else nextBtn.style.display = "none";
+    });
+
+    // Next button
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      const selectedArray = Array.from(selected);
+      window.location.href = `tournament.html?players=${encodeURIComponent(JSON.stringify(selectedArray))}`;
+    });
+  </script>
+
+</body>
+</html>
