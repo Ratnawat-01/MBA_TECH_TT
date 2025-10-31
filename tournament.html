@@ -80,49 +80,36 @@ h1:hover {
   body{margin:0;font-family:Inter,system-ui,Arial;background:linear-gradient(#0b0b0b,#070707);color:#fff}
   .wrap{padding:14px;max-width:900px;margin:0 auto}
 
-  /* ✅ NEON GLOW TABLE */
+/* ❌ No glow — clean table */
 table {
     width: 100%;
     border-collapse: collapse;
     margin: 12px 0;
-    
-    /* Green neon border + outer glow */
-    border: 2px solid rgba(0, 255, 144, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08); /* subtle border */
     border-radius: 10px;
     overflow: hidden;
-
-    box-shadow:
-        0 0 0.4em rgba(0, 255, 144, 0.4),
-        0 0 1em rgba(0, 255, 144, 0.25),
-        0 0 2em rgba(0, 255, 144, 0.15);
+    box-shadow: none !important; /* ensure no glow */
 }
 
 th, td {
     padding: 8px;
     text-align: center;
-    border: 1px solid rgba(0, 255, 144, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Header glow */
+/* Header stays readable */
 th {
-    background-color: rgba(0, 255, 144, 0.08);
-    color: #00ff90;
-    font-weight: bold;
-
-    text-shadow:
-        0 0 0.3em rgba(0,255,144,1),
-        0 0 0.6em rgba(0,255,144,0.5);
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #ffffff;
+    text-shadow: none !important;
 }
 
-/* Row hover neon effect */
+/* Remove hover glow too */
 tbody tr:hover {
-    background-color: rgba(0, 255, 144, 0.15);
-    transition: 0.25s ease-in-out;
-
-    box-shadow:
-        inset 0 0 1em rgba(0,255,144,0.3),
-        0 0 1em rgba(0,255,144,0.25);
+    background-color: rgba(255,255,255,0.05);
+    box-shadow: none !important;
 }
+
 
 .section {
     box-shadow: 0 0 0.7em rgba(0,255,144,0.25);
