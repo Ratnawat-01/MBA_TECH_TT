@@ -1,72 +1,80 @@
-body {
-  margin: 0;
-  overflow: hidden;
-  font-family: 'Poppins', sans-serif;
-  background: radial-gradient(circle, #222 60%, #111);
-  color: white;
-  text-align: center;
+/* ---------------- GENERAL ---------------- */
+body{
+  margin:0; overflow:hidden; font-family:'Poppins',sans-serif;
+  background:radial-gradient(circle,#222 60%,#111); color:#fff; text-align:center;
+}
+.title{ position:absolute; top:30px; left:50%; transform:translateX(-50%); font-size:2.5em; }
+.mba-text{ position:absolute; right:20px; bottom:20px; font-style:italic; font-size:1.2em; color:#ddd; }
+.bat-container{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+
+/* ---------------- BAT (CANVAS) ---------------- */
+canvas{
+  border-radius:42% 42% 12px 12px / 48% 48% 12px 12%;
+  background:url("images/bat-bg.jpg") no-repeat center center;
+  background-size:cover;
+  overflow:hidden; position:relative;
+  box-shadow:0 0 40px rgba(0,255,144,.20), inset 0 0 35px rgba(0,0,0,.5) !important;
+}
+/* glossy shine */
+canvas:before{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(115deg, rgba(255,255,255,.18) 0%, rgba(255,255,255,.02) 45%, rgba(255,255,255,.18) 100%);
+  mix-blend-mode:screen; pointer-events:none;
 }
 
-.title {
-  position: absolute;
-  top: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 2.5em;
+/* ---------------- PLAYER CIRCLES ---------------- */
+.player{ transition:transform .25s ease, box-shadow .25s ease; }
+
+/* glow when selected */
+.player.selected{
+  box-shadow:0 0 18px rgba(0,255,144,.9), 0 0 26px rgba(0,255,144,.35) !important;
+  transform:scale(1.08) !important;
 }
 
-.mba-text {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  font-style: italic;
-  font-size: 1.2em;
-  color: #ddd;
+/* glow when colliding (class added by JS) */
+.player.colliding{
+  box-shadow:0 0 18px rgba(0,255,144,.85), 0 0 32px rgba(0,255,144,.40) !important;
+  transform:scale(1.06) !important;
 }
 
-.bat-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+/* ---------------- NEXT BUTTON (BALL) ---------------- */
+/* Support BOTH ids to avoid mismatch */
+#nextBall, #nextButton{
+  position:absolute;
+  bottom:80px; left:50%; transform:translateX(-50%);
+  background:radial-gradient(circle at 35% 35%, #afffd8 0%, #00ff90 40%, #00bb66 100%);
+  border:none; border-radius:50%;
+  width:80px; height:80px;
+  font-size:16px; color:#002; font-weight:700;
+  cursor:pointer; display:none;
+  /* base glow */
+  box-shadow:0 0 25px rgba(0,255,144,.40), 0 0 55px rgba(0,255,144,.25) !important;
 }
 
-canvas {
-  border-radius: 50%;
-  background: url('images/bat-bg.png') no-repeat center center;
-  background-size: cover;
+/* pulse + stronger glow when ready */
+#nextBall.ready, #nextButton.ready{
+  animation:pulse 1.5s infinite;
+  box-shadow:0 0 30px rgba(0,255,144,.55), 0 0 75px rgba(0,255,144,.35) !important;
 }
 
-#nextButton {
-  position: absolute;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: radial-gradient(circle, #ffcc00, #ffaa00);
-  border: none;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  font-size: 16px;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
-  display: none;
+#nextBall:hover, #nextButton:hover{ transform:translateX(-50%) scale(1.15); }
+
+/* fly-away on click before navigate */
+#nextBall.fly, #nextButton.fly{
+  transition:transform .6s ease, opacity .6s ease;
+  transform:translateX(140px) translateY(-300px) scale(.3);
+  opacity:0;
 }
 
-.hidden {
-  display: none;
+@keyframes pulse{
+  0%{   transform:translateX(-50%) scale(1);   }
+  50%{  transform:translateX(-50%) scale(1.2); }
+  100%{ transform:translateX(-50%) scale(1);   }
 }
 
-#nextButton:hover {
-  transform: translateX(-50%) scale(1.1);
-}
+/* ---------------- TABLE (leaderboard) ---------------- */
+table{ box-shadow:0 0 15px rgba(255,204,0,.3); border-radius:10px; }
+th{ text-transform:uppercase; letter-spacing:1px; }
 
-table {
-  box-shadow: 0 0 15px rgba(255, 204, 0, 0.3);
-  border-radius: 10px;
-}
-th {
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
+/* utility */
+.hidden{ display:none; }

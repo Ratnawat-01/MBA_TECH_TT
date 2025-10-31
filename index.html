@@ -3,112 +3,226 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+
 <title>Table Tennis Champions — Select Players</title>
 <style>
-  :root{
-    --bg:#070707;
-    --accent:#00ff90;
-    --muted:#1a1a1a;
-    --card:#2b2b2b;
-  }
-  html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b0b0b 0%, #050505 60%);font-family:Inter,system-ui,Arial;}
-  .app {
-    display:flex;
-    flex-direction:column;
-    min-height:100vh;
-    align-items:center;
-    padding:18px 12px 34px;
-    box-sizing:border-box;
-    color:#fff;
-  }
+ :root{
+  --bg:#070707;
+  --accent:#00ff90; /* Neon Green */
+  --muted:#1a1a1a;
+  --card:#2b2b2b;
+}
 
-  header{
-    width:100%;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:6px;
-  }
-  h1{font-size:1.3rem;margin:0;color:var(--accent)}
-  .tag{font-size:0.85rem;color:#aaa;font-style:italic}
+/* Background */
+html,body{
+  height:100%;
+  margin:0;
+  background: radial-gradient(circle, #000 60%, #020202);
+  font-family: Inter, system-ui, Arial;
+  color:#fff;
+}
 
-  /* BAT container */
-  .bat-wrap{
-    width:86%;
-    max-width:360px;
-    aspect-ratio: 3/4; /* tall */
-    position:relative;
-    margin:12px 0 20px;
-  }
+/****** 🔥 Neon title effect ******/
+h1{
+  font-size: 2rem;
+  margin: 0;
+  color: var(--accent);
+  text-shadow:
+      0 0 8px var(--accent),
+      0 0 16px rgba(0,255,144,0.6),
+      0 0 32px rgba(0,255,144,0.3);
+  transition: 0.3s ease-in-out;
+}
 
-  /* Bat shape: rounded rectangle with tall top (semi-circle) */
-  .bat {
-    position:absolute;
-    inset:0;
-    background:linear-gradient(180deg,var(--card), #333);
-    border-radius: 42% 42% 12px 12px / 48% 48% 12px 12px;
-    box-shadow:0 0 30px rgba(0,255,144,0.06), inset 0 0 30px rgba(0,0,0,0.6);
-    overflow:visible;
-  }
+h1:hover{
+  text-shadow:
+      0 0 12px var(--accent),
+      0 0 28px rgba(0,255,144,0.8),
+      0 0 48px rgba(0,255,144,1);
+}
 
-  /* inner area overlay (for subtle border) */
-  .bat::after{
-    content:"";
-    position:absolute;left:6px;right:6px;top:6px;bottom:36px;
-    border-radius:inherit;
-    box-shadow: 0 0 24px rgba(0,255,144,0.08) inset;
-    pointer-events:none;
-  }
+/****** Layout ******/
+.app{
+  display:flex;
+  flex-direction:column;
+  min-height:100vh;
+  align-items:center;
+  padding:18px 12px 34px;
+  box-sizing:border-box;
+}
 
-  /* player circles */
-  .player {
-    position:absolute;
-    width:64px; height:64px;
-    border-radius:50%;
-    border:4px solid #ffffffcc;
-    box-sizing:border-box;
-    background-size:cover;
-    background-position:center;
-    touch-action:manipulation;
-    transition:transform .18s ease, border-color .18s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,.6);
-  }
-  .player.selected{
-    border-color:var(--accent);
-    transform:scale(1.06);
-    box-shadow: 0 6px 18px rgba(0,255,144,0.12);
-  }
+/****** MBA TECH tag ******/
+.tag{
+  font-size:0.85rem;
+  color:#d6ffe8;
+  font-style:italic;
+  text-shadow:0 0 6px rgba(0,255,144,0.6);
+}
 
-  /* Next button ball — moving across screen */
-  .next-ball {
-    position:fixed;
-    width:72px;
-    height:72px;
-    border-radius:50%;
-    left:50%;
-    transform:translateX(-50%);
-    bottom:18px;
-    background: radial-gradient(circle at 35% 35%, #afffd8 0%, var(--accent) 40%, #00cc70 100%);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:700;
-    color:#002;
-    box-shadow:0 6px 30px rgba(0,255,144,0.16);
-    z-index:80;
-    touch-action:none;
-    user-select:none;
-  }
+/****** 🏓 Bat glowing container ******/
+/* BAT container — NO GLOW here */
+.bat-wrap {
+  width: 86%;
+  max-width: 360px;
+  aspect-ratio: 3/4;
+  position: relative;
+  margin: 12px 0 20px;
+}
 
-  .next-ball.locked{opacity:0.42; filter:grayscale(30%); pointer-events:none;}
-  .next-ball.ready{cursor:pointer; pointer-events:auto;}
+/* ✅ Glow only on actual bat shape */
+.bat {
+  position: absolute;
+  inset: 0;
 
-  /* small helper */
-  .hint{font-size:0.82rem;color:#bdbdbd;margin-top:8px}
-  @media (max-width:420px){
-    .player{width:54px;height:54px;border-width:3px}
-    .next-ball{width:64px;height:64px;font-size:0.95rem}
+  background-image: url("./images/bat-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  border-radius: 42% 42% 12px 12px / 48% 48% 12px 12px;
+
+  /* Main glow */
+  box-shadow:
+       0 0 16px rgba(0,255,144,0.55),
+       inset 0 0 12px rgba(0,255,144,0.35);
+}
+
+/* ✅ Soft pulsing neon ONLY around paddle shape */
+.bat::after {
+  content: "";
+  position: absolute;
+  inset: -8px;           /* expands glow just outside shape */
+  border-radius: inherit;
+  pointer-events: none;
+
+  box-shadow:
+      0 0 22px rgba(0,255,144,0.45),
+      0 0 48px rgba(0,255,144,0.28);
+
+  animation: batPulse 3s ease-in-out infinite alternate;
+}
+
+/* slow breathing glow */
+@keyframes batPulse {
+  from {
+    box-shadow:
+        0 0 18px rgba(0,255,144,0.25),
+        0 0 32px rgba(0,255,144,0.18);
   }
+  to {
+    box-shadow:
+        0 0 32px rgba(0,255,144,0.55),
+        0 0 64px rgba(0,255,144,0.35);
+  }
+}
+
+
+/****** 🔥 Player glowing effects ******/
+/* Player wrapper to allow glow without transforming the hitbox */
+.player {
+  position:absolute;
+  width:64px; height:64px;
+  border-radius:50%;
+  background-size:cover;
+  background-position:center;
+
+  /* keep clean hitbox for collider */
+  border:3px solid rgba(255,255,255,0.7);
+
+  /* soft shadow (no filter or transform) */
+  box-shadow:
+      0 0 8px rgba(0,255,144,0),
+      inset 0 0 4px rgba(0,255,144,0);
+
+  transition: border-color .15s ease;
+}
+
+/* ✅ Apply glow without transform/scale */
+.player.selected{
+  border-color: var(--accent);
+  box-shadow:
+      0 0 14px rgba(0,255,144,0.85),
+      0 0 22px rgba(0,255,144,0.5),
+      inset 0 0 8px rgba(0,255,144,0.5);
+}
+
+
+/****** 🔥 NEXT button (ball) glowing neon ******/
+.next-ball{
+  position:fixed;
+  width:80px;
+  height:80px;
+  border-radius:50%;
+
+  background: radial-gradient(circle at 35% 35%, #afffd8 0%, var(--accent) 40%, #00cc70 100%);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-weight:700;
+  color:black;
+  font-size: 16px;
+
+  box-shadow:
+      0 0 12px rgba(0,255,144,0.9),
+      0 0 30px rgba(0,255,144,0.6),
+      inset 0 0 10px rgba(0,255,144,0.4);
+
+  transition: all 0.25s ease-in-out;
+  z-index:80;
+}
+
+.next-ball.ready:hover{
+  /* REMOVE transform scaling */
+  box-shadow:
+      0 0 18px rgba(0,255,144,1),
+      0 0 38px rgba(0,255,144,0.8),
+      inset 0 0 16px rgba(0,255,144,0.6);
+}
+
+
+/****** Disabled look ******/
+.next-ball.locked{
+  opacity:0.35;
+  filter: grayscale(90%);
+}
+
+.hint{font-size:0.82rem;color:#bdbdbd;margin-top:8px}
+
+/* ✅ Explosion animation when clicking NEXT */
+/* ✅ Explosion animation when clicking NEXT */
+.next-ball.expand-animation {
+  position: fixed !important;
+  z-index: 9999;
+  animation: expandToFullscreen 1s ease-out forwards;
+}
+
+@keyframes expandToFullscreen {
+  0% {
+    transform: translate(-50%, 0%) scale(1);
+    bottom: 18px;
+    box-shadow: 0 0 18px rgba(0,255,144,0.8);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(10);
+    bottom: 50%;
+    box-shadow:
+      0 0 60px rgba(0,255,144,1),
+      0 0 120px rgba(0,255,144,0.9);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(35); /* fullscreen responsive */
+    bottom: 50%;
+    border-radius: 0; /* turns into fullscreen glow panel */
+    box-shadow:
+      0 0 160px rgba(0,255,144,1),
+      0 0 300px rgba(0,255,144,1);
+  }
+}
+
+
+
 </style>
 </head>
 <body>
@@ -432,13 +546,20 @@ function updateNextBallState(){
 }
 
 /* clicking nextBall navigates to tournament page with selected players */
-nextBall.addEventListener('click', ()=>{
-  if(!nextBall.classList.contains('ready')) return;
-  const selected = items.filter(i=>i.selected).map(i=>i.name);
-  // pass via URL param (encoded JSON)
+nextBall.addEventListener('click', () => {
+  if (!nextBall.classList.contains('ready')) return;
+
+  nextBall.classList.add("expand-animation");
+
+  const selected = items.filter(i => i.selected).map(i => i.name);
   const param = encodeURIComponent(JSON.stringify(selected));
-  window.location.href = `tournament.html?players=${param}`;
+
+  setTimeout(() => {
+    window.location.href = `tournament.html?players=${param}`;
+  }, 950); // matches animation duration
 });
+
+
 
 /* handle resize: recalc bat geometry and reposition items safely */
 function handleResize(){
