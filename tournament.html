@@ -206,6 +206,36 @@ input[type="number"]:not(:placeholder-shown) {
 
 
 <script>
+  // ✅ Auto move to next input after 2 digits
+// ✅ Auto move to next <input type="number"> after 2 digits
+function enableAutoAdvance() {
+  const inputs = document.querySelectorAll('input[type="number"]');
+
+  inputs.forEach((input, index) => {
+
+    input.setAttribute("maxlength", "2");
+
+    input.addEventListener("input", function () {
+
+      if (this.value.length > 2) {
+        this.value = this.value.slice(0, 2);
+      }
+
+      if (this.value.length === 2) {
+        const nextInput = inputs[index + 1];
+        if (nextInput) nextInput.focus();
+      }
+    });
+
+    input.addEventListener("keypress", function (e) {
+      if (this.value.length >= 2 && e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+      }
+    });
+  });
+}
+
+
 /*
   Expected image files in /images/
   e.g. images/kartik.jpg (lowercase filenames recommended).
@@ -279,7 +309,10 @@ function renderMatches(){
       <td><input type="number" min="0" id="m_s2_${idx}" value="${m.s2}"></td>`;
     matchesTbody.appendChild(tr);
   });
+
+  enableAutoAdvance();   // ✅ activate auto-advance
 }
+
 
 // points calculation
 function resetStats(){
@@ -335,6 +368,8 @@ function renderPlayoffs(){
   lastSorted = players.slice().sort((a,b)=>{
     if(stats[b].points !== stats[a].points) return stats[b].points - stats[a].points;
     return stats[b].npr - stats[a].npr;
+    enableAutoAdvance(); // ✅ playoffs inputs also auto advance
+
   });
 
   // hide or show
@@ -352,8 +387,10 @@ function renderPlayoffs(){
       </div>
       <div style="margin-top:6px"><button id="computeQ2" class="btn">Compute Q1 & Eliminator → Setup Q2</button></div>
     `;
+    
     document.getElementById('computeQ2').onclick = computeQ2;
     finalArea.innerHTML = ''; // reset final area until Q2 is computed
+    
   } else {
     // direct final top 2
     playoffBox.style.display='none';
@@ -365,6 +402,8 @@ function renderPlayoffs(){
       <div style="margin-top:10px"><button id="submitFinal" class="btn">Submit Final</button></div>
     `;
     document.getElementById('submitFinal').onclick = ()=> finishTournament(finalists[0],finalists[1], null);
+    enableAutoAdvance(); // ✅ finals inputs auto advance
+
   }
 }
 
@@ -406,6 +445,8 @@ function computeQ2(){
     `;
     document.getElementById('submitFinal').onclick = ()=> finishTournament(q1Winner, q2Winner, {q1Winner,q1Loser,eWinner,eLoser,q2Winner,q2Loser});
   };
+  enableAutoAdvance(); // ✅ Q2 inputs auto advance
+
 }
 
 // finish final: determine placements, save to localStorage and redirect to leaderboard
@@ -478,8 +519,9 @@ function init(){
   resetStats();
   renderPoints();
   renderPlayoffs();
-
+  enableAutoAdvance(); // ✅ activates auto advance
 }
+
 
 document.getElementById('updatePoints').addEventListener('click', updatePoints);
 window.addEventListener('load', init);
