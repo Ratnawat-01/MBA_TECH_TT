@@ -192,11 +192,18 @@ h1:hover{
 
 /* ✅ Explosion animation when clicking NEXT */
 /* ✅ Explosion animation when clicking NEXT */
+/* ✅ Explosion animation */
 .next-ball.expand-animation {
   position: fixed !important;
   z-index: 9999;
   animation: expandToFullscreen 1s ease-out forwards;
 }
+
+/* ✅ Hide text WHILE exploding */
+.next-ball.expand-animation span {
+  display: none !important;
+}
+
 
 @keyframes expandToFullscreen {
   0% {
@@ -549,15 +556,21 @@ function updateNextBallState(){
 nextBall.addEventListener('click', () => {
   if (!nextBall.classList.contains('ready')) return;
 
+  // Hide text so it doesn't scale
+  nextBall.textContent = "";
+
+  // Add the explosion animation class
   nextBall.classList.add("expand-animation");
 
   const selected = items.filter(i => i.selected).map(i => i.name);
   const param = encodeURIComponent(JSON.stringify(selected));
 
+  // Redirect after animation
   setTimeout(() => {
     window.location.href = `tournament.html?players=${param}`;
-  }, 950); // matches animation duration
+  }, 950); // match animation duration
 });
+
 
 
 
